@@ -6,6 +6,7 @@ ds/
 vd/
 ch/
 a4564-Duggan_090406_7253.dng
+wandb/
 
 # C extensions
 *.so
