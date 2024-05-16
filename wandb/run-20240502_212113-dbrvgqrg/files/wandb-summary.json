@@ -1,0 +1,1 @@
+{"Training MSE Loss": 0.007472714362666011, "Training CLIP Loss": 0.84580078125, "Training Total Loss": 0.25897846519947054, "_timestamp": 1714654239.5160882, "_runtime": 1765.45281124115, "_step": 658, "Validation MSE Loss": 0.006153595633804798, "Validation CLIP Loss": 0.847705078125, "Validation Total Loss": 0.2585921883583069, "_wandb": {"runtime": 1764}}

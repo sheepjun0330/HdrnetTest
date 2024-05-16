@@ -1,0 +1,1 @@
+{"Training MSE Loss": NaN, "Training CLIP Loss": 1.0234375, "Training Total Loss": NaN, "_timestamp": 1715663223.039825, "_runtime": 1845.8043148517609, "_step": 658, "Validation MSE Loss": NaN, "Validation CLIP Loss": 1.026611328125, "Validation Total Loss": NaN, "_wandb": {"runtime": 1845}}

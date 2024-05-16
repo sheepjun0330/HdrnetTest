@@ -1,0 +1,79 @@
+{
+    "os": "Linux-3.10.0-1160.83.1.el7.x86_64-x86_64-with-centos-7.9.2009-Core",
+    "python": "3.6.13",
+    "heartbeatAt": "2024-05-14T13:18:00.074769",
+    "startedAt": "2024-05-14T13:17:59.191229",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--test-image=./DSC_1177.jpg",
+        "--epochs=10",
+        "--batch-size=6",
+        "--dataset=/home/sheepjun0330/HdrnetTest/ds",
+        "--validset=/home/sheepjun0330/HdrnetTest/vd",
+        "--lr=0.0001"
+    ],
+    "state": "running",
+    "program": "train.py",
+    "codePathLocal": "train.py",
+    "codePath": "train.py",
+    "host": "n6",
+    "username": "sheepjun0330",
+    "executable": "/home/sheepjun0330/anaconda3/envs/py36/bin/python",
+    "cpu_count": 6,
+    "cpu_count_logical": 6,
+    "cpu_freq": {
+        "current": 1366.6666666666667,
+        "min": 1200.0,
+        "max": 3601.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 1200.0,
+            "min": 1200.0,
+            "max": 3601.0
+        },
+        {
+            "current": 1200.0,
+            "min": 1200.0,
+            "max": 3601.0
+        },
+        {
+            "current": 1900.0,
+            "min": 1200.0,
+            "max": 3601.0
+        },
+        {
+            "current": 1200.0,
+            "min": 1200.0,
+            "max": 3601.0
+        },
+        {
+            "current": 1200.0,
+            "min": 1200.0,
+            "max": 3601.0
+        },
+        {
+            "current": 1500.0,
+            "min": 1200.0,
+            "max": 3601.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 94.36874008178711,
+            "used": 2.9038238525390625
+        }
+    },
+    "gpu": "NVIDIA TITAN Xp",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA TITAN Xp",
+            "memory_total": 12884901888
+        }
+    ],
+    "memory": {
+        "total": 62.83226776123047
+    }
+}
