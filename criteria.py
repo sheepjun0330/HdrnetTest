@@ -104,7 +104,7 @@ class CLIPLoss(torch.nn.Module):
         clip_loss += self.clip_directional_loss(src_img, target_img, target_direction)
         return clip_loss
     
-    def patch_loss(self, src_img: torch.Tensor, target_img: torch.Tensor, target_direction: torch.Tensor, thresh=0.7, num_crops=64, crop_size = 64):
+    def patch_loss(self, src_img: torch.Tensor, target_img: torch.Tensor, target_direction: torch.Tensor, thresh=0.7, num_crops=64, crop_size = 128):
         def clip_normalize(image, device):
             image = F.interpolate(image,size=224,mode='bicubic')
             mean=torch.tensor([0.48145466, 0.4578275, 0.40821073]).to(device)
@@ -140,16 +140,13 @@ class CLIPLoss(torch.nn.Module):
         #image_features /= (image_features.clone().norm(dim=-1, keepdim=True))
         
         image_features = self.get_image_features(clip_normalize(img_aug,self.device))
-        source_features = self.get_image_features(clip_normalize(src_img,self.device))
-        print("size")
-        print(source_features.size())
-        print(image_features.size())       
+        source_features = self.get_image_features(clip_normalize(src_img,self.device))      
 
-        img_direction = (image_features-source_features)
+        img_direction = (image_features-source_features.repeat(num_crops,1))
         img_direction /= img_direction.clone().norm(dim=-1, keepdim=True)
 
-        loss_temp = (1- torch.cosine_similarity(img_direction, target_direction, dim=1))
+        loss_temp = (1- torch.cosine_similarity(img_direction, target_direction.repeat(num_crops,1), dim=1))
         loss_temp[loss_temp<thresh] =0
         patch_loss+=loss_temp.mean()
 
-        return patch_loss.item()
+        return patch_loss
