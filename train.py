@@ -1,7 +1,7 @@
 import os
 import sys
 from test import test
-
+import gc
 import cv2
 import random
 import matplotlib.pyplot as plt
@@ -21,13 +21,18 @@ from utils import load_image, save_params, get_latest_ckpt, load_params
 torch.manual_seed(13)
 random.seed(13)
 
+torch.cuda.empty_cache()
+gc.collect()
 
 def train(params=None):
     os.makedirs(params['ckpt_path'], exist_ok=True)
     wandb.init(project="HdrnetV3")
     config = {
       "learning_rate": params['lr'],
-      "alpha": params['lambda'],
+      "lam1": params['lam1'],
+      "lam2": params['lam2'],
+      "lam3": params['lam3'],
+      "lam4": params['lam4'],
       "epochs": params['epochs'],
       "batch_size": params['batch_size']
     }
@@ -37,7 +42,7 @@ def train(params=None):
     train_dataset = HDRDataset(params['dataset'], params=params, suffix=params['dataset_suffix'])
     train_loader = DataLoader(train_dataset, batch_size=params['batch_size'], shuffle=True)
     valid_dataset = HDRDataset(params['validset'], params=params, suffix=params['validset_suffix'])
-    valid_loader = DataLoader(valid_dataset, batch_size=params['batch_size']*2)
+    valid_loader = DataLoader(valid_dataset, batch_size=params['batch_size'])
     alpha = params['lambda']
     model = HDRPointwiseNN(params=params)
     ckpt = get_latest_ckpt(params['ckpt_path'])
@@ -62,7 +67,7 @@ def train(params=None):
     lam2 = params['lam2']
     lam3 = params['lam3']
     lam4 = params['lam4']
-
+    batch_size = params['batch_size']
     for e in range(params['epochs']):
         model.train()
         for i, (low, full) in enumerate(train_loader):
@@ -71,13 +76,13 @@ def train(params=None):
             low = low.to(device)
             full = full.to(device)
             res = model(low, full)
-            text_direction = cliploss.compute_text_direction("Normal photo.", "Warm photo.")
+            text_direction = cliploss.compute_text_direction("Normal photo", "Warm photo")
             mse_loss = mseloss(full,res)
             clip_loss = cliploss.clip_directional_loss(full, res, text_direction)
-            patch_loss = cliploss.patch_loss(full, res, text_direction)
-            #tv_loss = cliploss.tv_loss(res).item()
+            patch_loss = cliploss.patch_loss(full, res, text_direction, batch_size)
+            tv_loss = cliploss.tv_loss(res)
 
-            total_loss = lam1*mse_loss + lam2*clip_loss + lam3*patch_loss
+            total_loss = lam1*mse_loss + lam2*clip_loss + lam3*patch_loss + lam4*tv_loss
             total_loss.backward()
             train_losses["mse_loss"].append(mse_loss.item())
             train_losses["clip_loss"].append(clip_loss.item())
@@ -92,9 +97,9 @@ def train(params=None):
                 train_total_loss = np.mean(train_losses["total_loss"])
                 wandb.log({"Training MSE Loss": train_mse_loss, "Training CLIP Loss": train_clip_loss, "Training Patch Loss":train_patch_loss, "Training Total Loss": train_total_loss})
                 del train_losses
+                torch.cuda.empty_cache()
                 train_losses = {"mse_loss":[], "clip_loss":[], "patch_loss":[], "total_loss":[]}
-
-            optimizer.step()
+            
             if (count+1) % params['ckpt_interval'] == 0:
                 print('@@ MIN:',torch.min(res),'MAX:',torch.max(res))
                 model.eval().cpu()
@@ -111,12 +116,12 @@ def train(params=None):
                 low = low.to(device)
                 full = full.to(device)
                 res = model(low, full)
-                text_direction = cliploss.compute_text_direction("Normal photo.", "Warm photo.")
+                text_direction = cliploss.compute_text_direction("Normal photo", "Warm photo")
                 mse_loss = mseloss(full,res)
                 clip_loss = cliploss.clip_directional_loss(full, res, text_direction)
-                patch_loss = cliploss.patch_loss(full,res,text_direction)
-                #tv_loss = cliploss.tv_loss(res).item()
-                total_loss = lam1*mse_loss + lam2*clip_loss + lam3*patch_loss 
+                patch_loss = cliploss.patch_loss(full,res,text_direction,batch_size)
+                tv_loss = cliploss.tv_loss(res)
+                total_loss = lam1*mse_loss + lam2*clip_loss + lam3*patch_loss +lam4*tv_loss
                 valid_losses["mse_loss"].append(mse_loss.item())
                 valid_losses["clip_loss"].append(clip_loss.item())
                 valid_losses["patch_loss"].append(patch_loss.item())
@@ -128,6 +133,7 @@ def train(params=None):
                     valid_total_loss = np.mean(valid_losses["total_loss"])
                     wandb.log({"Validation MSE Loss": valid_mse_loss, "Validation CLIP Loss": valid_clip_loss, "Validation Patch Loss": valid_patch_loss, "Validation Total Loss": valid_total_loss})
                     del valid_losses
+                    torch.cuda.empty_cache()
                     valid_losses = {"mse_loss":[], "clip_loss":[], "patch_loss":[], "total_loss":[]}
                 count2 += 1
 
@@ -158,10 +164,10 @@ if __name__ == '__main__':
     parser.add_argument('--validset-suffix', type=str, default='', help='Add suffix to input/output dirs. Useful when train on different dataset image sizes')
     parser.add_argument('--lambda', type=float, default=0.5, help='parameter between mse & clip')
     
-    parser.add_argument('--lam1', type=float, default=150, help='mse loss')
-    parser.add_argument('--lam2', type=float, default=500, help='clip loss')
-    parser.add_argument('--lam3', type=float, default=9000, help='patch loss')
-    parser.add_argument('--lam4', type=float, default=2e-3, help='tv loss')
+    parser.add_argument('--lam1', type=float, default=1, help='mse loss')
+    parser.add_argument('--lam2', type=float, default=1, help='clip loss')
+    parser.add_argument('--lam3', type=float, default=0, help='patch loss')
+    parser.add_argument('--lam4', type=float, default=0, help='tv loss')
 
     params = vars(parser.parse_args())
 

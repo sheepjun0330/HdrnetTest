@@ -104,7 +104,7 @@ class CLIPLoss(torch.nn.Module):
         clip_loss += self.clip_directional_loss(src_img, target_img, target_direction)
         return clip_loss
     
-    def patch_loss(self, src_img: torch.Tensor, target_img: torch.Tensor, target_direction: torch.Tensor, thresh=0.7, num_crops=64, crop_size = 128):
+    def patch_loss(self, src_img: torch.Tensor, target_img: torch.Tensor, target_direction: torch.Tensor, batch_size, thresh=0.7, num_crops=64, crop_size = 128):
         def clip_normalize(image, device):
             image = F.interpolate(image,size=224,mode='bicubic')
             mean=torch.tensor([0.48145466, 0.4578275, 0.40821073]).to(device)
@@ -145,8 +145,18 @@ class CLIPLoss(torch.nn.Module):
         img_direction = (image_features-source_features.repeat(num_crops,1))
         img_direction /= img_direction.clone().norm(dim=-1, keepdim=True)
 
-        loss_temp = (1- torch.cosine_similarity(img_direction, target_direction.repeat(num_crops,1), dim=1))
+        loss_temp = (1- torch.cosine_similarity(img_direction, target_direction.repeat(img_direction.shape[0],1), dim=1))
         loss_temp[loss_temp<thresh] =0
         patch_loss+=loss_temp.mean()
 
         return patch_loss
+    
+    def tv_loss(self, inputs_jit):
+        diff1 = inputs_jit[:, :, :, :-1] - inputs_jit[:, :, :, 1:]
+        diff2 = inputs_jit[:, :, :-1, :] - inputs_jit[:, :, 1:, :]
+        diff3 = inputs_jit[:, :, 1:, :-1] - inputs_jit[:, :, :-1, 1:]
+        diff4 = inputs_jit[:, :, :-1, :-1] - inputs_jit[:, :, 1:, 1:]
+
+        loss_var_l2 = torch.norm(diff1) + torch.norm(diff2) + torch.norm(diff3) + torch.norm(diff4)
+    
+        return loss_var_l2

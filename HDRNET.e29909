@@ -1,0 +1,4 @@
+/var/spool/slurm/d/job29909/slurm_script: line 20: cd: HdrnetTest/ch: No such file or directory
+rm: cannot remove ‘ckpt*’: No such file or directory
+python: can't open file 'train.py': [Errno 2] No such file or directory
+python: can't open file 'test.py': [Errno 2] No such file or directory

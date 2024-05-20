@@ -1,0 +1,7 @@
+Start
+Conda Activate
+Run Start
+Fri May 17 23:28:33 KST 2024
+Fin & Deactivate
+             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+             29909   titanxp   HDRNET sheepjun  R       0:02      1 n6
